@@ -1,0 +1,38 @@
+TASK 1.1
+
+import csv
+import json
+
+def parse_row(row):
+    """Convert specific fields to the correct data types."""
+    row["age"] = int(row["age"])
+    row["fee_inr"] = int(row["fee_inr"])
+    row["prior_no_shows"] = int(row["prior_no_shows"])
+    row["distance_km"] = float(row["distance_km"])
+    return row
+
+accepted = []
+rejected = []
+
+with open("appointments.csv", newline="") as csvfile:
+    reader = csv.DictReader(csvfile)
+
+    # Print header
+    print("Header:", reader.fieldnames)
+
+    rows = list(reader)
+    print("Row count:", len(rows))
+
+    for row in rows:
+        try:
+            converted_row = parse_row(row)
+            accepted.append(converted_row)
+        except ValueError:
+            rejected.append(row)
+
+# Save rejected rows to JSON
+with open("rejected_rows.json", "w") as jsonfile:
+    json.dump(rejected, jsonfile, indent=2)
+
+print("Accepted rows:", len(accepted))
+print("Rejected rows:", len(rejected))
