@@ -1,0 +1,35 @@
+import numpy as np
+
+# Create lead_days
+df["lead_days"] = (df["appt_date"] - df["booked_on"]).dt.days
+
+# Create no_show
+df["no_show"] = (df["status"] == "No-Show").astype(int)
+
+# Create NumPy matrix
+X = df[["age", "distance_km", "fee_inr", "lead_days"]].to_numpy()
+
+# (a) Mean of each column
+col_means = X.mean(axis=0)
+
+print("Column means:")
+print("age, distance_km, fee_inr, lead_days")
+print(col_means)
+
+# (b) Rows with lead_days > 14
+lead_mask = X[:, 3] > 14
+
+lead_count = lead_mask.sum()
+lead_share = lead_mask.mean()
+
+print("\nRows with lead_days > 14:", lead_count)
+print("Share with lead_days > 14:", lead_share)
+
+# (c) Z-scores for distance_km
+distance = X[:, 1]
+
+z_scores = (distance - np.mean(distance)) / np.std(distance)
+
+outlier_count = (np.abs(z_scores) > 2).sum()
+
+print("\nRows with |z| > 2 for distance_km:", outlier_count)
