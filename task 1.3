@@ -1,0 +1,40 @@
+import numpy as np
+
+# (a) Invalid ages -> missing
+df.loc[(df["age"] < 1) | (df["age"] > 100), "age"] = np.nan
+
+# (b) Fill missing values
+df["age"] = (
+    df["age"]
+    .fillna(df["age"].median())
+    .round()
+    .astype(int)
+)
+
+df["distance_km"] = df["distance_km"].fillna(df["distance_km"].median())
+
+# (c) Cap outliers
+capped_counts = {}
+
+for col in ["distance_km", "fee_inr"]:
+    Q1 = df[col].quantile(0.25)
+    Q3 = df[col].quantile(0.75)
+    IQR = Q3 - Q1
+
+    lower_fence = Q1 - 1.5 * IQR
+    upper_fence = Q3 + 1.5 * IQR
+
+    capped_counts[col] = (
+        ((df[col] < lower_fence) | (df[col] > upper_fence))
+        .sum()
+    )
+
+    df[col] = np.clip(df[col], lower_fence, upper_fence)
+
+# (d) Round values
+df["distance_km"] = df["distance_km"].round(1)
+df["fee_inr"] = df["fee_inr"].round().astype(int)
+
+# Print results
+print("Distance_km values capped:", capped_counts["distance_km"])
+print("Fee_inr values capped:", capped_counts["fee_inr"])
