@@ -1,0 +1,25 @@
+import pandas as pd
+df = pd.read_csv("appointments.csv")
+df.head()
+
+print("Shape:",df.shape)
+print("Info:",df.info)
+print("Duplicated rows:",df.duplicated().sum())
+print("Null:",df.isnull().sum())
+
+# (a) Drop exact duplicate rows
+df = df.drop_duplicates()
+
+# (b) Clean booking_channel
+df["booking_channel"] = df["booking_channel"].str.strip().str.title()
+
+# (c) Convert date columns
+df["appt_date"] = pd.to_datetime(df["appt_date"], errors="coerce")
+df["booked_on"] = pd.to_datetime(df["booked_on"])
+
+# (d) Drop rows where appt_date is missing after conversion or status is missing
+df = df.dropna(subset=["appt_date", "status"])
+
+# Verify result
+print("\nShape after cleaning:",df.shape)
+print("\nRemaining missing values:",df.isnull().sum())
