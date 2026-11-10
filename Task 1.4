@@ -33,3 +33,4 @@ z_scores = (distance - np.mean(distance)) / np.std(distance)
 outlier_count = (np.abs(z_scores) > 2).sum()
 
 print("\nRows with |z| > 2 for distance_km:", outlier_count)
+---------------------------------------------------------------
