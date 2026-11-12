@@ -1,0 +1,60 @@
+import pandas as pd
+import requests
+import time
+
+# 1. Load the clinics dataset
+clinics_df = pd.read_csv("Clinics.csv")
+
+temp_list = []
+
+# 2. Iterate through each clinic and request data from Open-Meteo API
+for idx, row in clinics_df.iterrows():
+    clinic_name = row["clinic_name"]
+    lat = row["latitude"]
+    lon = row["longitude"]
+    
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "hourly": "temperature_2m",
+        "forecast_days": 1
+    }
+    
+    temp_c = None
+    success = False
+    
+    for attempt in range(2):  # Try up to 2 times (original + 1 retry)
+        try:
+            response = requests.get(
+                "https://api.open-meteo.com/v1/forecast", 
+                params=params, 
+                timeout=10
+            )
+            if response.status_code == 200:
+                data = response.json()
+                if "hourly" in data and "temperature_2m" in data["hourly"] and len(data["hourly"]["temperature_2m"]) > 0:
+                    temp_c = data["hourly"]["temperature_2m"][0]
+                    success = True
+                    break
+                else:
+                    reason = "hourly temperature data is missing in the response"
+            else:
+                reason = f"status code {response.status_code}"
+        except requests.exceptions.RequestException as e:
+            reason = f"Request Exception: {str(e)}"
+        
+        if not success and attempt == 0:
+            # Sleep briefly before retry
+            time.sleep(1)
+            
+    if not success:
+        print(f"Clinic '{clinic_name}' failed to fetch temperature. Reason: {reason}")
+        
+    temp_list.append(temp_c)
+
+# 3. Add the temperature column and save the dataset
+clinics_df["temp_c"] = temp_list
+clinics_df.to_csv("clinics_enriched.csv", index=False)
+
+# Display enriched dataframe
+display(clinics_df)
