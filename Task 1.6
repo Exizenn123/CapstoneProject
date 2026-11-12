@@ -1,0 +1,84 @@
+import pandas as pd
+
+# 1. Sort the cleaned data by appointment_id
+df = df.sort_values(by="appointment_id")
+
+# 2. Format both date columns as YYYY-MM-DD text
+df["booked_on"] = df["booked_on"].dt.strftime("%Y-%m-%d")
+df["appt_date"] = df["appt_date"].dt.strftime("%Y-%m-%d")
+
+# List the 16 columns in the exact order requested
+columns_order = [
+    "appointment_id", "patient_id", "clinic_id", "booked_on", "appt_date", 
+    "age", "gender", "distance_km", "fee_inr", "booking_channel", 
+    "visit_type", "reminder_sent", "prior_no_shows", "status", "lead_days", "no_show"
+]
+
+# Subset and reorder columns
+df_clean = df[columns_order]
+
+# 3. Check and print that appointment_id is unique
+is_unique = df_clean["appointment_id"].is_unique
+print(f"Is 'appointment_id' unique? {is_unique}")
+
+# 4. Check and print that none of the 16 columns has a missing value
+missing_counts = df_clean.isnull().sum()
+print("\nMissing values per column in final dataset:")
+print(missing_counts)
+any_missing = df_clean.isnull().any().any()
+print(f"\nDoes any column contain missing values? {any_missing}")
+
+# 5. Save appointments_clean.csv
+df_clean.to_csv("appointments_clean.csv", index=False)
+print("\nSaved 'appointments_clean.csv' successfully.")
+
+
+
+
+# 6. Load enriched clinics data
+clinics_enriched = pd.read_csv("clinics_enriched.csv")
+
+# 7. Write load_data.sql
+with open("load_data.sql", "w") as f:
+    # Write Clinics INSERT statements first
+    for _, row in clinics_enriched.iterrows():
+        cid = row["clinic_id"]
+        cname = row["clinic_name"]
+        city = row["city"]
+        tier = row["tier"]
+        lat = row["latitude"]
+        lon = row["longitude"]
+        
+        # handle temp_c if it is missing
+        if pd.isna(row["temp_c"]):
+            temp_val = "NULL"
+        else:
+            temp_val = f"{row['temp_c']}"
+            
+        sql = f"INSERT INTO clinics VALUES ('{cid}','{cname}','{city}','{tier}',{lat},{lon},{temp_val});\n"
+        f.write(sql)
+        
+    # Write Appointments INSERT statements second
+    for _, row in df_clean.iterrows():
+        # Construct unquoted values for numbers and single-quoted values for text
+        appt_id = row["appointment_id"]
+        pat_id = row["patient_id"]
+        clin_id = row["clinic_id"]
+        booked = row["booked_on"]
+        appt = row["appt_date"]
+        age = int(row["age"])
+        gender = row["gender"]
+        dist = float(row["distance_km"])
+        fee = int(row["fee_inr"])
+        chan = row["booking_channel"]
+        vtype = row["visit_type"]
+        rem = row["reminder_sent"]
+        prior = int(row["prior_no_shows"])
+        stat = row["status"]
+        lead = int(row["lead_days"])
+        noshow = int(row["no_show"])
+        
+        sql = f"INSERT INTO appointments VALUES ('{appt_id}','{pat_id}','{clin_id}','{booked}','{appt}',{age},'{gender}',{dist},{fee},'{chan}','{vtype}','{rem}',{prior},'{stat}',{lead},{noshow});\n"
+        f.write(sql)
+
+print("Saved 'load_data.sql' successfully with clinics inserted first.")
