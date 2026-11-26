@@ -1,0 +1,57 @@
+
+import numpy as np
+import pandas as pd
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (
+    accuracy_score,
+    recall_score,
+    roc_auc_score
+)
+
+# ------------------------------------------------
+# 1. Train Random Forest
+# ------------------------------------------------
+
+rf = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42
+)
+
+rf.fit(X_train, y_train_bin)
+
+# ------------------------------------------------
+# 2. Test predictions and metrics
+# ------------------------------------------------
+
+rf_pred = rf.predict(X_test)
+
+rf_prob = rf.predict_proba(X_test)[:, 1]
+
+rf_accuracy = accuracy_score(y_test_bin, rf_pred)
+
+rf_recall = recall_score(y_test_bin, rf_pred)
+
+rf_auc = roc_auc_score(y_test_bin, rf_prob)
+
+print("Random Forest")
+print("Accuracy:", rf_accuracy)
+print("Recall:", rf_recall)
+print("ROC-AUC:", rf_auc)
+
+# ------------------------------------------------
+# 3. Top 3 feature importances
+# ------------------------------------------------
+
+importance_table = pd.DataFrame({
+    "Feature": X.columns,
+    "Importance": rf.feature_importances_
+})
+
+importance_table = importance_table.sort_values(
+    by="Importance",
+    ascending=False
+)
+
+print("\nTop 3 Feature Importances:")
+print(importance_table.head(3))
