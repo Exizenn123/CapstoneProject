@@ -1,0 +1,97 @@
+
+import numpy as np
+import pandas as pd
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score
+)
+
+# ------------------------------------------------
+# 1. Scale the features
+# ------------------------------------------------
+
+scaler = StandardScaler()
+
+X_train_s = scaler.fit_transform(X_train)
+X_test_s = scaler.transform(X_test)
+
+# ------------------------------------------------
+# 2. Encode target
+# ------------------------------------------------
+# 1 = No-show
+# 0 = Attended
+
+y_train_bin = (y_train == "No-show").astype(int)
+y_test_bin = (y_test == "No-show").astype(int)
+
+# ------------------------------------------------
+# 3. Train Logistic Regression
+# ------------------------------------------------
+
+model = LogisticRegression(max_iter=1000)
+
+model.fit(X_train_s, y_train_bin)
+
+# ------------------------------------------------
+# 4. Predictions
+# ------------------------------------------------
+
+y_pred = model.predict(X_test_s)
+
+# Probability of No-show (class 1)
+y_prob = model.predict_proba(X_test_s)[:, 1]
+
+# ------------------------------------------------
+# 5. Evaluation
+# ------------------------------------------------
+
+print("Accuracy:", accuracy_score(y_test_bin, y_pred))
+
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test_bin, y_pred))
+
+print("\nPrecision:", precision_score(y_test_bin, y_pred))
+print("Recall:", recall_score(y_test_bin, y_pred))
+print("F1 Score:", f1_score(y_test_bin, y_pred))
+
+print("\nROC-AUC:", roc_auc_score(y_test_bin, y_prob))
+
+# ------------------------------------------------
+# 6. Feature coefficients
+# ------------------------------------------------
+
+coefficients = model.coef_[0]
+
+coef_table = pd.DataFrame({
+    "Feature": X.columns,
+    "Coefficient": coefficients
+})
+
+print("\nCoefficients:")
+print(coef_table)
+
+# ------------------------------------------------
+# 7. Reminder effect
+# ------------------------------------------------
+
+reminder_index = list(X.columns).index("reminder_sent")
+
+reminder_coef = model.coef_[0][reminder_index]
+reminder_std = scaler.scale_[reminder_index]
+
+# Odds ratio for a 1 standard deviation increase
+scaled_odds_ratio = np.exp(reminder_coef)
+
+# Odds ratio for reminder going from 0 to 1
+original_odds_ratio = np.exp(reminder_coef / reminder_std)
+
+print("\nReminder coefficient:", reminder_coef)
+print("exp(coefficient):", scaled_odds_ratio)
+print("Reminder 0 -> 1 odds ratio:", original_odds_ratio)
