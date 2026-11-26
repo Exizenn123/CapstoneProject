@@ -1,0 +1,57 @@
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+# Load the dataset — do not shuffle or sort
+df = pd.read_csv("appointments_clean.csv")
+
+# Build X using only the allowed features
+X = df[
+    [
+        "age",
+        "distance_km",
+        "fee_inr",
+        "lead_days",
+        "prior_no_shows",
+        "reminder_sent",
+        "booking_channel",
+        "visit_type"
+    ]
+].copy()
+
+# Convert Yes/No to 1/0
+X["reminder_sent"] = X["reminder_sent"].map({
+    "Yes": 1,
+    "No": 0
+})
+
+# One-hot encode categorical features
+X = pd.get_dummies(
+    X,
+    columns=["booking_channel", "visit_type"]
+)
+
+# Target
+y = df["no_show"]
+
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+# Report results
+training_size = len(X_train)
+test_size = len(X_test)
+
+test_no_shows = (y_test == "No-show").sum()
+
+# Baseline: always predict "Attended"
+baseline_accuracy = (y_test == "Attended").mean()
+
+print("Training size:", training_size)
+print("Test size:", test_size)
+print("No-shows in test set:", test_no_shows)
+print("Baseline accuracy:", baseline_accuracy)
