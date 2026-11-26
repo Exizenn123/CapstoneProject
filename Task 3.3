@@ -1,0 +1,54 @@
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+
+# ------------------------------------------------
+# 1. Decision Tree with no depth limit
+# ------------------------------------------------
+
+tree_unlimited = DecisionTreeClassifier(random_state=42)
+
+tree_unlimited.fit(X_train, y_train)
+
+train_acc_unlimited = accuracy_score(
+    y_train,
+    tree_unlimited.predict(X_train)
+)
+
+test_acc_unlimited = accuracy_score(
+    y_test,
+    tree_unlimited.predict(X_test)
+)
+
+# ------------------------------------------------
+# 2. Decision Tree with max_depth = 3
+# ------------------------------------------------
+
+tree_depth3 = DecisionTreeClassifier(
+    max_depth=3,
+    random_state=42
+)
+
+tree_depth3.fit(X_train, y_train)
+
+train_acc_depth3 = accuracy_score(
+    y_train,
+    tree_depth3.predict(X_train)
+)
+
+test_acc_depth3 = accuracy_score(
+    y_test,
+    tree_depth3.predict(X_test)
+)
+
+# ------------------------------------------------
+# 3. Report results
+# ------------------------------------------------
+
+print("Decision Tree - No depth limit")
+print("Training accuracy:", train_acc_unlimited)
+print("Test accuracy:", test_acc_unlimited)
+
+print("\nDecision Tree - max_depth=3")
+print("Training accuracy:", train_acc_depth3)
+print("Test accuracy:", test_acc_depth3)
